@@ -23,6 +23,7 @@ import assertNotInfinite from './utils/assertNotInfinite'
 import forceIterator from './utils/forceIterator'
 import deepEqual from './utils/deepEqual'
 import mixin from './utils/mixin'
+import isProtoKey from './utils/protoInjection'
 
 import { Map } from './Map'
 import { OrderedMap } from './OrderedMap'
@@ -84,7 +85,11 @@ mixin(Iterable, {
   toObject() {
     assertNotInfinite(this.size);
     var object = {};
-    this.__iterate((v, k) => { object[k] = v; });
+    this.__iterate((v, k) => {
+      if (!isProtoKey(k)) {
+        object[k] = v;
+      }
+    });
     return object;
   },
 

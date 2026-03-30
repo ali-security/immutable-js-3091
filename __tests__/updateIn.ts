@@ -271,4 +271,38 @@ describe('updateIn', () => {
 
   })
 
+  describe('prototype pollution', () => {
+
+    it('setIn on plain object with __proto__ key should not pollute returned object', () => {
+      type User = { profile: { bio: string }; admin?: boolean };
+
+      var obj: User = { profile: { bio: 'Hello' } };
+      var result = I.Map(obj).setIn(['__proto__', 'admin'], true);
+
+      // The returned object should NOT have 'admin' accessible via prototype
+      expect(result.toJS().admin).toBeUndefined();
+    })
+
+    it('setIn on plain object with nested __proto__ key should not pollute returned object', () => {
+      type User = { profile: { bio: string; admin?: boolean } };
+
+      var obj: User = { profile: { bio: 'Hello' } };
+      var result = I.Map(obj).setIn(['profile', '__proto__', 'admin'], true);
+
+      // The nested object should NOT have 'admin' accessible via prototype
+      expect(result.getIn(['profile', 'admin'])).toBeUndefined();
+    })
+
+    it('updateIn on plain object with __proto__ key should not pollute returned object', () => {
+      type User = { profile: { bio: string }; admin?: boolean };
+
+      var obj: User = { profile: { bio: 'Hello' } };
+      var result = I.Map(obj).updateIn(['__proto__', 'admin'], () => true);
+
+      // The returned object should NOT have 'admin' accessible via prototype
+      expect(result.toJS().admin).toBeUndefined();
+    })
+
+  })
+
 })

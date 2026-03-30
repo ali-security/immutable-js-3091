@@ -142,4 +142,31 @@ describe('merge', () => {
     expect(m2.getIn(['a', 'b', 0])).toEqual({plain: 'obj'});
   })
 
+  it('is not sensible to prototype pollution', () => {
+    type User = { user: string; admin?: boolean };
+
+    // Simulates: app merges HTTP request body (JSON) into user profile
+    var userProfile: User = { user: 'Alice' };
+    var requestBody = JSON.parse('{"user":"Eve","__proto__":{"admin":true}}');
+
+    var r1 = I.Map(userProfile).mergeDeep(requestBody);
+
+    expect(r1.get('user')).toBe('Eve'); // Eve (updated correctly)
+    expect(r1.toJS().admin).toBeUndefined();
+
+    var r2 = I.Map(userProfile).mergeDeepWith((a, b) => b, requestBody);
+    expect(r2.toJS().admin).toBeUndefined();
+
+    var r3 = I.Map(userProfile).merge(requestBody);
+    expect(r3.toJS().admin).toBeUndefined();
+
+    var nested = JSON.parse('{"profile":{"__proto__":{"admin":true}}}');
+    var r6 = I.fromJS({ profile: { bio: 'Hello' } }).mergeDeep(nested);
+
+    expect(r6.getIn(['profile', 'admin'])).toBeUndefined();
+
+    // @ts-expect-error -- testing prototype pollution
+    expect({}.admin).toBeUndefined(); // Confirm NOT global too
+  })
+
 })

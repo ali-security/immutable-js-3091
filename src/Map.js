@@ -19,6 +19,7 @@ import { sortFactory } from './Operations'
 import forceIterator from './utils/forceIterator'
 import invariant from './utils/invariant'
 import assertNotInfinite from './utils/assertNotInfinite'
+import isProtoKey from './utils/protoInjection'
 
 import { OrderedMap } from './OrderedMap'
 
@@ -753,11 +754,17 @@ export function mergeIntoCollectionWith(collection, merger, iters) {
   return collection.withMutations(collection => {
     var mergeIntoMap = merger ?
       (value, key) => {
+        if (isProtoKey(key)) {
+          return;
+        }
         collection.update(key, NOT_SET, existing =>
           existing === NOT_SET ? value : merger(existing, value, key)
         );
       } :
       (value, key) => {
+        if (isProtoKey(key)) {
+          return;
+        }
         collection.set(key, value);
       }
     for (var ii = 0; ii < iters.length; ii++) {
@@ -779,6 +786,9 @@ function updateInDeepMap(existing, keyPathIter, notSetValue, updater) {
     'invalid keyPath'
   );
   var key = step.value;
+  if (isProtoKey(key)) {
+    return existing;
+  }
   var nextExisting = isNotSet ? NOT_SET : existing.get(key, NOT_SET);
   var nextUpdated = updateInDeepMap(
     nextExisting,
